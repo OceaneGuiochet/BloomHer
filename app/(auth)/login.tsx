@@ -2,6 +2,8 @@ import { Link, router } from "expo-router";
 import { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, Alert } from "react-native";
 import { loginWithEmail } from "../../src/services/auth.service";
+import { auth } from "../../src/config/firebase";
+import { getUserById } from "../../src/services/user.service";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -10,8 +12,19 @@ export default function Login() {
   async function login() {
     try {
       await loginWithEmail(email, password);
-      Alert.alert("Succès", "Connexion réussie");
-      router.replace("/home");
+
+      if (!auth.currentUser) {
+        Alert.alert("Erreur", "Utilisateur introuvable");
+        return;
+      }
+
+      const userProfile = await getUserById(auth.currentUser.uid);
+
+      if (!userProfile || userProfile.isProfileComplete !== true) {
+        router.replace("/complete-profile");
+      } else {
+        router.replace("/home");
+      }
     } catch (error: any) {
       Alert.alert("Erreur", error.message ?? "Impossible de se connecter");
     }

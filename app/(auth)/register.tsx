@@ -2,18 +2,32 @@ import { Link, router } from "expo-router";
 import { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, Alert } from "react-native";
 import { registerWithEmail } from "../../src/services/auth.service";
+import { auth } from "../../src/config/firebase";
+import { createUser, getUserById } from "../../src/services/user.service";
 
 export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   async function register() {
+    if (!email || !password) {
+      Alert.alert("Erreur", "Remplis tous les champs");
+      return;
+    }
+
     try {
-      await registerWithEmail(email, password);
-      Alert.alert("Succès", "Compte créé avec succès");
-      router.replace("/home");
+      const user = await registerWithEmail(email, password);
+      await createUser(user);
+
+      const userProfile = await getUserById(user.uid);
+
+      if (!userProfile || userProfile.isProfileComplete !== true) {
+        router.replace("/complete-profile");
+      } else {
+        router.replace("/home");
+      }
     } catch (error: any) {
-      Alert.alert("Erreur", error.message ?? "Impossible de créer le compte");
+      Alert.alert("Erreur", error?.message ?? "Impossible de créer le compte");
     }
   }
 
