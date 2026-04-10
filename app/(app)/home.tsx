@@ -136,6 +136,8 @@ export default function Home() {
 
   return (
     <View style={styles.container}>
+      <Text style={styles.logo}>BloomHer</Text>
+
       <View style={styles.card}>
         <ScrollView
           showsVerticalScrollIndicator={true}
@@ -226,7 +228,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#f8f3ea",
     justifyContent: "center",
     alignItems: "center",
-    paddingBottom: 30,
   },
   center: {
     flex: 1,
@@ -235,13 +236,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 20,
   },
+  logo: {
+    fontSize: 28,
+    fontWeight: "900",
+    color: "#16245c",
+    marginBottom: 18,
+    position: "absolute",
+    top: "1.5%",
+  },
   loadingText: {
     fontSize: 16,
     color: "#666",
   },
   card: {
     width: "88%",
-    height: "70%",
+    height: "68%",
     backgroundColor: "#ffffff",
     borderRadius: 30,
     overflow: "hidden",
@@ -317,7 +326,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     gap: 30,
-    marginTop: 25,
+    marginTop: 22,
   },
   passButton: {
     width: 70,

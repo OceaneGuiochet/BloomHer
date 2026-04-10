@@ -26,7 +26,7 @@ function generateRandomPhotos() {
     if (!usedIndexes.has(randomIndex)) {
       usedIndexes.add(randomIndex);
       photos.push(
-        `https://randomuser.me/api/portraits/women/${randomIndex}.jpg`
+        `https://randomuser.me/api/portraits/women/${randomIndex}.jpg`,
       );
     }
   }
@@ -131,7 +131,7 @@ export default function Profile() {
       bio,
       photos,
       location.latitude,
-      location.longitude
+      location.longitude,
     );
 
     Alert.alert("Succès", "Profil mis à jour");
@@ -145,8 +145,7 @@ export default function Profile() {
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={true}
         >
-          <Text style={styles.title}>BloomHer</Text>
-          <Text style={styles.subtitle}>Mon profil</Text>
+          <Text style={styles.title}>Mon profil</Text>
 
           <View style={styles.form}>
             <Input
@@ -188,10 +187,7 @@ export default function Profile() {
                 />
               ))}
 
-              <TouchableOpacity
-                style={styles.addPhoto}
-                onPress={refreshPhotos}
-              >
+              <TouchableOpacity style={styles.addPhoto} onPress={refreshPhotos}>
                 <Text style={styles.addPhotoText}>+</Text>
               </TouchableOpacity>
             </View>
@@ -225,12 +221,7 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     color: "#16245c",
     textAlign: "center",
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#666",
     marginBottom: 25,
-    textAlign: "center",
   },
   form: {
     width: "100%",
