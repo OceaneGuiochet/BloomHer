@@ -21,7 +21,7 @@ function generateRandomPhotos() {
     if (!usedIndexes.has(randomIndex)) {
       usedIndexes.add(randomIndex);
       photos.push(
-        'https://randomuser.me/api/portraits/women/${randomIndex}.jpg'
+        `https://randomuser.me/api/portraits/women/${randomIndex}.jpg`
       );
     }
   }
