@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -7,6 +6,8 @@ import {
   Alert,
   Image,
 } from "react-native";
+import { useEffect, useState } from "react";
+import * as Location from "expo-location";
 import { auth } from "@/src/config/firebase";
 import { getUserById, updateUserProfile } from "@/src/services/user.service";
 
@@ -29,10 +30,37 @@ function generateRandomPhotos() {
   return photos;
 }
 
+function isValidBirthDate(value: string) {
+  const regex = /^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])\/\d{4}$/;
+  return regex.test(value);
+}
+
+function calculateAge(birthDate: string) {
+  if (!birthDate) return "";
+
+  const [day, month, year] = birthDate.split("/").map(Number);
+  const today = new Date();
+  const birth = new Date(year, month - 1, day);
+
+  if (isNaN(birth.getTime())) return "";
+
+  let age = today.getFullYear() - birth.getFullYear();
+
+  const hasHadBirthdayThisYear =
+    today.getMonth() > birth.getMonth() ||
+    (today.getMonth() === birth.getMonth() &&
+      today.getDate() >= birth.getDate());
+
+  if (!hasHadBirthdayThisYear) {
+    age--;
+  }
+
+  return String(age);
+}
+
 export default function Profile() {
   const [firstname, setFirstname] = useState("");
-  const [age, setAge] = useState("");
-  const [city, setCity] = useState("");
+  const [birthDate, setBirthDate] = useState("");
   const [bio, setBio] = useState("");
   const [photos, setPhotos] = useState<string[]>([]);
 
@@ -45,14 +73,29 @@ export default function Profile() {
       if (!data) return;
 
       setFirstname(data.firstname || "");
-      setAge(data.age ? String(data.age) : "");
-      setCity(data.city || "");
+      setBirthDate(data.birthDate || "");
       setBio(data.bio || "");
       setPhotos(data.photos || []);
     }
 
     loadUser();
   }, []);
+
+  async function getUserLocation() {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+
+    if (status !== "granted") {
+      Alert.alert("Erreur", "Permission localisation refusée");
+      return null;
+    }
+
+    const location = await Location.getCurrentPositionAsync({});
+
+    return {
+      latitude: location.coords.latitude,
+      longitude: location.coords.longitude,
+    };
+  }
 
   function refreshPhotos() {
     setPhotos(generateRandomPhotos());
@@ -64,18 +107,27 @@ export default function Profile() {
       return;
     }
 
-    if (!firstname || !age || !city || photos.length === 0) {
+    if (!firstname || !birthDate) {
       Alert.alert("Erreur", "Remplis les champs obligatoires");
       return;
     }
 
+    if (!isValidBirthDate(birthDate)) {
+      Alert.alert("Erreur", "Entre une date au format JJ/MM/AAAA");
+      return;
+    }
+
+    const location = await getUserLocation();
+    if (!location) return;
+
     await updateUserProfile(
       auth.currentUser.uid,
       firstname,
-      Number(age),
-      city,
+      birthDate,
       bio,
-      photos
+      photos,
+      location.latitude,
+      location.longitude
     );
 
     Alert.alert("Succès", "Profil mis à jour");
@@ -92,17 +144,13 @@ export default function Profile() {
       />
 
       <TextInput
-        placeholder="Âge"
-        value={age}
-        onChangeText={setAge}
+        placeholder="Date de naissance (JJ/MM/AAAA)"
+        value={birthDate}
+        onChangeText={setBirthDate}
         keyboardType="numeric"
       />
 
-      <TextInput
-        placeholder="Ville"
-        value={city}
-        onChangeText={setCity}
-      />
+      <Text>Âge : {calculateAge(birthDate) || "-"}</Text>
 
       <TextInput
         placeholder="Bio"
@@ -117,16 +165,16 @@ export default function Profile() {
           <Image
             key={index}
             source={{ uri: photo }}
-            style={{ width: 100, height: 100, borderRadius: 10 }}
+            style={{ width: 100, height: 100 }}
           />
         ))}
       </View>
 
-      <TouchableOpacity onPress={refreshPhotos} style={{ marginTop: 20 }}>
+      <TouchableOpacity onPress={refreshPhotos}>
         <Text>Changer mes photos</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={saveProfile} style={{ marginTop: 20 }}>
+      <TouchableOpacity onPress={saveProfile}>
         <Text>Enregistrer</Text>
       </TouchableOpacity>
     </View>

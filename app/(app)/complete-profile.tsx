@@ -7,6 +7,8 @@ import {
   Alert,
   Image,
 } from "react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import * as Location from "expo-location";
 import { auth } from "@/src/config/firebase";
 import { completeUserProfile } from "@/src/services/user.service";
 import { router } from "expo-router";
@@ -30,14 +32,39 @@ function generateRandomPhotos() {
   return photos;
 }
 
+function formatDate(date: Date) {
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+
+  return `${day}/${month}/${year}`;
+}
+
 export default function CompleteProfile() {
   const [firstname, setFirstname] = useState("");
-  const [age, setAge] = useState("");
-  const [city, setCity] = useState("");
+  const [birthDate, setBirthDate] = useState("");
+  const [selectedDate, setSelectedDate] = useState(new Date(2000, 0, 1));
+  const [showPicker, setShowPicker] = useState(false);
   const [photos] = useState<string[]>(generateRandomPhotos());
 
+  async function getUserLocation() {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+
+    if (status !== "granted") {
+      Alert.alert("Erreur", "Active la localisation");
+      return null;
+    }
+
+    const location = await Location.getCurrentPositionAsync({});
+
+    return {
+      latitude: location.coords.latitude,
+      longitude: location.coords.longitude,
+    };
+  }
+
   async function saveProfile() {
-    if (!firstname || !age || !city) {
+    if (!firstname || !birthDate) {
       Alert.alert("Erreur", "Remplis tous les champs");
       return;
     }
@@ -47,12 +74,16 @@ export default function CompleteProfile() {
       return;
     }
 
+    const location = await getUserLocation();
+    if (!location) return;
+
     await completeUserProfile(
       auth.currentUser.uid,
       firstname,
-      Number(age),
-      city,
-      photos
+      birthDate,
+      photos,
+      location.latitude,
+      location.longitude
     );
 
     router.replace("/(app)/home");
@@ -68,27 +99,42 @@ export default function CompleteProfile() {
         onChangeText={setFirstname}
       />
 
-      <TextInput
-        placeholder="Âge"
-        value={age}
-        onChangeText={setAge}
-        keyboardType="numeric"
-      />
+      <TouchableOpacity
+        onPress={() => setShowPicker(true)}
+        style={{ marginTop: 20 }}
+      >
+        <Text>
+          {birthDate
+            ? `Date de naissance : ${birthDate}`
+            : "Choisir une date de naissance"}
+        </Text>
+      </TouchableOpacity>
 
-      <TextInput
-        placeholder="Ville"
-        value={city}
-        onChangeText={setCity}
-      />
+      {showPicker && (
+        <DateTimePicker
+          value={selectedDate}
+          mode="date"
+          display="default"
+          maximumDate={new Date()}
+          onChange={(event, date) => {
+            setShowPicker(false);
+
+            if (date) {
+              setSelectedDate(date);
+              setBirthDate(formatDate(date));
+            }
+          }}
+        />
+      )}
 
       <Text style={{ marginTop: 20 }}>Photos attribuées automatiquement :</Text>
 
       <View style={{ flexDirection: "row", gap: 10, marginTop: 10 }}>
-        {photos.map((photo, index) => (
+        {photos.map((photo, i) => (
           <Image
-            key={index}
+            key={i}
             source={{ uri: photo }}
-            style={{ width: 100, height: 100, borderRadius: 10 }}
+            style={{ width: 100, height: 100 }}
           />
         ))}
       </View>

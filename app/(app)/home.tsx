@@ -11,7 +11,41 @@ import {
 import { auth } from "@/src/config/firebase";
 import { useEffect, useState } from "react";
 import { likeUser } from "@/src/services/match.service";
-import { getOtherUsers } from "@/src/services/user.service";
+import { getOtherUsers, getUserById } from "@/src/services/user.service";
+
+function getDistanceApprox(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+) {
+  const dx = lat1 - lat2;
+  const dy = lon1 - lon2;
+  return Math.sqrt(dx * dx + dy * dy) * 111;
+}
+
+function calculateAge(birthDate: string) {
+  if (!birthDate) return "";
+
+  const [day, month, year] = birthDate.split("/").map(Number);
+  const today = new Date();
+  const birth = new Date(year, month - 1, day);
+
+  if (isNaN(birth.getTime())) return "";
+
+  let age = today.getFullYear() - birth.getFullYear();
+
+  const hasHadBirthdayThisYear =
+    today.getMonth() > birth.getMonth() ||
+    (today.getMonth() === birth.getMonth() &&
+      today.getDate() >= birth.getDate());
+
+  if (!hasHadBirthdayThisYear) {
+    age--;
+  }
+
+  return String(age);
+}
 
 export default function Home() {
   const [profiles, setProfiles] = useState<any[]>([]);
@@ -25,8 +59,38 @@ export default function Home() {
         setLoading(false);
         return;
       }
+
+      const me = await getUserById(auth.currentUser.uid);
       const users = await getOtherUsers(auth.currentUser.uid);
-      setProfiles(users);
+
+      if (!me || me.latitude == null || me.longitude == null) {
+        setProfiles([]);
+        setLoading(false);
+        return;
+      }
+
+      const filtered = users
+        .map((user: any) => {
+          if (user.latitude == null || user.longitude == null) return null;
+
+          const distance = getDistanceApprox(
+            me.latitude,
+            me.longitude,
+            user.latitude,
+            user.longitude
+          );
+
+          if (distance <= 50) {
+            return {
+              ...user,
+              distance: Math.round(distance),
+            };
+          }
+          return null;
+        })
+        .filter(Boolean);
+
+      setProfiles(filtered as any[]);
       setLoading(false);
     }
     loadProfiles();
@@ -40,7 +104,7 @@ export default function Home() {
     const isMatch = await likeUser(auth.currentUser.uid, currentProfile.id);
 
     if (isMatch) {
-      Alert.alert("Match", 'Toi et ${currentProfile.firstname} avez match !');
+      Alert.alert("Match", `Toi et ${currentProfile.firstname} avez match !`);
     }
     nextProfile();
   }
@@ -118,9 +182,15 @@ export default function Home() {
 
         <View style={styles.info}>
           <Text style={styles.name}>
-            {currentProfile.firstname}, {currentProfile.age}
+            {currentProfile.firstname}, {calculateAge(currentProfile.birthDate)}
           </Text>
-          <Text style={styles.city}>{currentProfile.city}</Text>
+          <Text style={styles.city}>
+            {currentProfile.distance == null
+              ? "Distance inconnue"
+              : currentProfile.distance < 1
+              ? "Moins de 1 km"
+              : `${currentProfile.distance} km`}
+          </Text>
           <Text style={styles.bio}>
             {currentProfile.bio
               ? currentProfile.bio

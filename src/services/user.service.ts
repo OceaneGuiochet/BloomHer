@@ -13,10 +13,11 @@ export async function createUser(user: any) {
     uid: user.uid,
     email: user.email,
     firstname: "",
-    age: null,
-    city: "",
+    birthDate: "",
     bio: "",
     photos: [],
+    latitude: null,
+    longitude: null,
     isProfileComplete: false,
     createdAt: new Date(),
   });
@@ -25,9 +26,7 @@ export async function createUser(user: any) {
 export async function getUserById(uid: string) {
   const snapshot = await getDoc(doc(db, "users", uid));
 
-  if (!snapshot.exists()) {
-    return null;
-  }
+  if (!snapshot.exists()) return null;
 
   return snapshot.data();
 }
@@ -49,15 +48,17 @@ export async function getOtherUsers(currentUserId: string) {
 export async function completeUserProfile(
   uid: string,
   firstname: string,
-  age: number,
-  city: string,
-  photos: string[]
+  birthDate: string,
+  photos: string[],
+  latitude: number,
+  longitude: number
 ) {
   await updateDoc(doc(db, "users", uid), {
     firstname,
-    age,
-    city,
+    birthDate,
     photos,
+    latitude,
+    longitude,
     isProfileComplete: true,
   });
 }
@@ -65,16 +66,18 @@ export async function completeUserProfile(
 export async function updateUserProfile(
   uid: string,
   firstname: string,
-  age: number,
-  city: string,
+  birthDate: string,
   bio: string,
-  photos: string[]
+  photos: string[],
+  latitude: number,
+  longitude: number
 ) {
   await updateDoc(doc(db, "users", uid), {
     firstname,
-    age,
-    city,
+    birthDate,
     bio,
     photos,
+    latitude,
+    longitude,
   });
 }
