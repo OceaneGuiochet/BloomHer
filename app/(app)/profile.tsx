@@ -1,15 +1,19 @@
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   Alert,
   Image,
+  StyleSheet,
+  ScrollView,
 } from "react-native";
 import { useEffect, useState } from "react";
 import * as Location from "expo-location";
 import { auth } from "@/src/config/firebase";
 import { getUserById, updateUserProfile } from "@/src/services/user.service";
+import Card from "@/src/components/Card";
+import Input from "@/src/components/Input";
+import Button from "@/src/components/Button";
 
 function generateRandomPhotos() {
   const count = Math.floor(Math.random() * 3) + 1;
@@ -134,49 +138,162 @@ export default function Profile() {
   }
 
   return (
-    <View>
-      <Text>Mon profil</Text>
+    <View style={styles.container}>
+      <Card>
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={true}
+        >
+          <Text style={styles.title}>BloomHer</Text>
+          <Text style={styles.subtitle}>Mon profil</Text>
 
-      <TextInput
-        placeholder="Prénom"
-        value={firstname}
-        onChangeText={setFirstname}
-      />
+          <View style={styles.form}>
+            <Input
+              placeholder="Prénom"
+              value={firstname}
+              onChangeText={setFirstname}
+            />
 
-      <TextInput
-        placeholder="Date de naissance (JJ/MM/AAAA)"
-        value={birthDate}
-        onChangeText={setBirthDate}
-        keyboardType="numeric"
-      />
+            <Input
+              placeholder="Date de naissance (JJ/MM/AAAA)"
+              value={birthDate}
+              onChangeText={setBirthDate}
+              keyboardType="numeric"
+            />
 
-      <Text>Âge : {calculateAge(birthDate) || "-"}</Text>
+            <View style={styles.ageBox}>
+              <Text style={styles.ageLabel}>Âge</Text>
+              <Text style={styles.ageValue}>
+                {calculateAge(birthDate) || "-"}
+              </Text>
+            </View>
 
-      <TextInput
-        placeholder="Bio"
-        value={bio}
-        onChangeText={setBio}
-      />
+            <Input
+              placeholder="Bio"
+              value={bio}
+              onChangeText={setBio}
+              multiline
+              style={styles.bioInput}
+            />
 
-      <Text style={{ marginTop: 20 }}>Mes photos</Text>
+            <Text style={styles.sectionTitle}>Mes photos</Text>
 
-      <View style={{ flexDirection: "row", gap: 10, marginTop: 10 }}>
-        {photos.map((photo, index) => (
-          <Image
-            key={index}
-            source={{ uri: photo }}
-            style={{ width: 100, height: 100 }}
-          />
-        ))}
-      </View>
+            <View style={styles.photosContainer}>
+              {photos.map((photo, index) => (
+                <Image
+                  key={index}
+                  source={{ uri: photo }}
+                  style={styles.photo}
+                />
+              ))}
 
-      <TouchableOpacity onPress={refreshPhotos}>
-        <Text>Changer mes photos</Text>
-      </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.addPhoto}
+                onPress={refreshPhotos}
+              >
+                <Text style={styles.addPhotoText}>+</Text>
+              </TouchableOpacity>
+            </View>
 
-      <TouchableOpacity onPress={saveProfile}>
-        <Text>Enregistrer</Text>
-      </TouchableOpacity>
+            <View style={styles.saveButton}>
+              <Button title="Enregistrer" onPress={saveProfile} />
+            </View>
+          </View>
+        </ScrollView>
+      </Card>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#f8f3ea",
+    padding: 20,
+  },
+  scroll: {
+    flex: 1,
+  },
+  content: {
+    paddingHorizontal: 28,
+    paddingTop: 40,
+    paddingBottom: 30,
+  },
+  title: {
+    fontSize: 42,
+    fontWeight: "900",
+    color: "#16245c",
+    textAlign: "center",
+  },
+  subtitle: {
+    fontSize: 16,
+    color: "#666",
+    marginBottom: 25,
+    textAlign: "center",
+  },
+  form: {
+    width: "100%",
+  },
+  ageBox: {
+    backgroundColor: "#fff",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#f1dede",
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+    marginBottom: 14,
+  },
+  ageLabel: {
+    fontSize: 13,
+    color: "#777",
+    marginBottom: 4,
+  },
+  ageValue: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#16245c",
+  },
+  bioInput: {
+    minHeight: 110,
+    textAlignVertical: "top",
+    paddingTop: 14,
+  },
+  sectionTitle: {
+    marginTop: 8,
+    marginBottom: 12,
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#16245c",
+  },
+  photosContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    marginBottom: 20,
+  },
+  photo: {
+    width: 100,
+    height: 100,
+    borderRadius: 18,
+  },
+  addPhoto: {
+    width: 100,
+    height: 100,
+    borderRadius: 18,
+    borderWidth: 2,
+    borderColor: "#f1dede",
+    borderStyle: "dashed",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
+  },
+  addPhotoText: {
+    fontSize: 36,
+    color: "#16245c",
+    fontWeight: "300",
+  },
+  saveButton: {
+    marginTop: 10,
+  },
+});

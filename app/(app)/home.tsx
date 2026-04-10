@@ -17,7 +17,7 @@ function getDistanceApprox(
   lat1: number,
   lon1: number,
   lat2: number,
-  lon2: number
+  lon2: number,
 ) {
   const dx = lat1 - lat2;
   const dy = lon1 - lon2;
@@ -52,6 +52,7 @@ export default function Home() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [photoIndex, setPhotoIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const cardWidth = Dimensions.get("window").width * 0.88;
 
   useEffect(() => {
     async function loadProfiles() {
@@ -77,7 +78,7 @@ export default function Home() {
             me.latitude,
             me.longitude,
             user.latitude,
-            user.longitude
+            user.longitude,
           );
 
           if (distance <= 50) {
@@ -120,7 +121,7 @@ export default function Home() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <Text>Chargement...</Text>
+        <Text style={styles.loadingText}>Chargement...</Text>
       </View>
     );
   }
@@ -136,78 +137,79 @@ export default function Home() {
   return (
     <View style={styles.container}>
       <View style={styles.card}>
-        {currentProfile.photos && currentProfile.photos.length > 0 ? (
-          <>
-            <ScrollView
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              onScroll={(event) => {
-                const largeur = Dimensions.get("window").width * 0.88;
-                const x = event.nativeEvent.contentOffset.x;
-                const index = Math.round(x / largeur);
-                setPhotoIndex(index);
-              }}
-              scrollEventThrottle={16}
-            >
-              {currentProfile.photos.map((photo: string, index: number) => (
-                <Image
-                  key={index}
-                  source={{ uri: photo }}
-                  style={{
-                    width: 350,
-                    height: 400,
-                  }}
-                />
-              ))}
-            </ScrollView>
+        <ScrollView
+          showsVerticalScrollIndicator={true}
+          contentContainerStyle={styles.cardScrollContent}
+        >
+          {currentProfile.photos && currentProfile.photos.length > 0 ? (
+            <View style={styles.imageSection}>
+              <ScrollView
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                onScroll={(event) => {
+                  const x = event.nativeEvent.contentOffset.x;
+                  const index = Math.round(x / cardWidth);
+                  setPhotoIndex(index);
+                }}
+                scrollEventThrottle={16}
+              >
+                {currentProfile.photos.map((photo: string, index: number) => (
+                  <Image
+                    key={index}
+                    source={{ uri: photo }}
+                    style={styles.photo}
+                  />
+                ))}
+              </ScrollView>
 
-            <View style={styles.pointsContainer}>
-              {currentProfile.photos.map((_: any, index: number) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.point,
-                    index === photoIndex && styles.pointActif,
-                  ]}
-                />
-              ))}
+              <View style={styles.pointsContainer}>
+                {currentProfile.photos.map((_: any, index: number) => (
+                  <View
+                    key={index}
+                    style={[
+                      styles.point,
+                      index === photoIndex && styles.pointActive,
+                    ]}
+                  />
+                ))}
+              </View>
             </View>
-          </>
-        ) : (
-          <View style={styles.noImage}>
-            <Text>Pas de photo</Text>
-          </View>
-        )}
+          ) : (
+            <View style={styles.noImage}>
+              <Text style={styles.noImageText}>Pas de photo</Text>
+            </View>
+          )}
 
-        <View style={styles.info}>
-          <Text style={styles.name}>
-            {currentProfile.firstname}, {calculateAge(currentProfile.birthDate)}
-          </Text>
-          <Text style={styles.city}>
-            {currentProfile.distance == null
-              ? "Distance inconnue"
-              : currentProfile.distance < 1
-              ? "Moins de 1 km"
-              : `${currentProfile.distance} km`}
-          </Text>
-          <Text style={styles.bio}>
-            {currentProfile.bio
-              ? currentProfile.bio
-              : "Pas de bio pour le moment"}
-          </Text>
-        </View>
+          <View style={styles.info}>
+            <Text style={styles.name}>
+              {currentProfile.firstname}, {calculateAge(currentProfile.birthDate)}
+            </Text>
+            <Text style={styles.city}>
+              {currentProfile.distance == null
+                ? "Distance inconnue"
+                : currentProfile.distance < 1
+                  ? "Moins de 1 km"
+                  : `${currentProfile.distance} km`}
+            </Text>
+            <Text style={styles.bio}>
+              {currentProfile.bio
+                ? currentProfile.bio
+                : "Pas de bio pour le moment"}
+            </Text>
+          </View>
+        </ScrollView>
       </View>
 
       <View style={styles.actions}>
-        <TouchableOpacity onPress={handlePass}>
+        <TouchableOpacity style={styles.passButton} onPress={handlePass}>
           <Image
             source={require("../../assets/images/close.png")}
             style={styles.icon}
           />
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={like}>
+        <TouchableOpacity style={styles.likeButton} onPress={like}>
           <Image
             source={require("../../assets/images/like.png")}
             style={styles.icon}
@@ -221,70 +223,143 @@ export default function Home() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#f8f3ea",
+    justifyContent: "center",
     alignItems: "center",
-    paddingTop: "5%",
+    paddingBottom: 30,
   },
   center: {
     flex: 1,
+    backgroundColor: "#ffffff",
     justifyContent: "center",
     alignItems: "center",
+    padding: 20,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: "#666",
   },
   card: {
-    width: "90%",
-    height: "75%",
-    backgroundColor: "#f6f6f6",
-    borderRadius: 20,
+    width: "88%",
+    height: "70%",
+    backgroundColor: "#ffffff",
+    borderRadius: 30,
     overflow: "hidden",
+    shadowColor: "#000",
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 6,
+  },
+  cardScrollContent: {
+    paddingBottom: 20,
+  },
+  imageSection: {
+    position: "relative",
+  },
+  photo: {
+    width: Dimensions.get("window").width * 0.88,
+    height: 350,
+    resizeMode: "cover",
   },
   noImage: {
-    height: 300,
-    backgroundColor: "#ddd",
+    height: 350,
+    backgroundColor: "#e7e3dc",
     justifyContent: "center",
     alignItems: "center",
   },
-  info: {
-    padding: 12,
-  },
-  name: {
-    fontSize: 22,
-    fontWeight: "bold",
-  },
-  city: {
+  noImageText: {
     color: "#666",
-    marginTop: 4,
-  },
-  bio: {
-    marginTop: 10,
+    fontSize: 16,
   },
   pointsContainer: {
+    position: "absolute",
+    bottom: 14,
+    left: 0,
+    right: 0,
     flexDirection: "row",
     justifyContent: "center",
-    marginTop: 8,
+    alignItems: "center",
   },
   point: {
     width: 8,
     height: 8,
-    backgroundColor: "#ccc",
     borderRadius: 4,
-    margin: 3,
+    backgroundColor: "rgba(255,255,255,0.55)",
+    marginHorizontal: 4,
   },
-  pointActif: {
-    backgroundColor: "#7a1541",
+  pointActive: {
+    width: 20,
+    backgroundColor: "#ffffff",
+  },
+  info: {
+    padding: 20,
+    paddingTop: 18,
+  },
+  name: {
+    fontSize: 26,
+    fontWeight: "900",
+    color: "#16245c",
+  },
+  city: {
+    marginTop: 6,
+    fontSize: 15,
+    color: "#777",
+  },
+  bio: {
+    marginTop: 12,
+    fontSize: 15,
+    color: "#444",
+    lineHeight: 22,
   },
   actions: {
     flexDirection: "row",
-    marginTop: 20,
-    gap: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 30,
+    marginTop: 25,
+  },
+  passButton: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: "#ffffff",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
+  },
+  likeButton: {
+    width: 70,
+    height: 70,
+    borderRadius: 40,
+    backgroundColor: "#faf8f7",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 5,
   },
   icon: {
-    width: 40,
-    height: 40,
+    width: 32,
+    height: 32,
+    resizeMode: "contain",
   },
   emptyTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
+    fontSize: 26,
+    fontWeight: "900",
+    color: "#16245c",
+    textAlign: "center",
   },
   emptyText: {
     marginTop: 10,
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
   },
 });
