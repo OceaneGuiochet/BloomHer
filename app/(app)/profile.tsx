@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -8,8 +8,7 @@ import {
   Image,
 } from "react-native";
 import { auth } from "@/src/config/firebase";
-import { completeUserProfile } from "@/src/services/user.service";
-import { router } from "expo-router";
+import { getUserById, updateUserProfile } from "@/src/services/user.service";
 
 function generateRandomPhotos() {
   const count = Math.floor(Math.random() * 3) + 1;
@@ -22,7 +21,7 @@ function generateRandomPhotos() {
     if (!usedIndexes.has(randomIndex)) {
       usedIndexes.add(randomIndex);
       photos.push(
-        `https://randomuser.me/api/portraits/women/${randomIndex}.jpg`
+        'https://randomuser.me/api/portraits/women/${randomIndex}.jpg'
       );
     }
   }
@@ -30,37 +29,61 @@ function generateRandomPhotos() {
   return photos;
 }
 
-export default function CompleteProfile() {
+export default function Profile() {
   const [firstname, setFirstname] = useState("");
   const [age, setAge] = useState("");
   const [city, setCity] = useState("");
-  const [photos] = useState<string[]>(generateRandomPhotos());
+  const [bio, setBio] = useState("");
+  const [photos, setPhotos] = useState<string[]>([]);
 
-  async function saveProfile() {
-    if (!firstname || !age || !city) {
-      Alert.alert("Erreur", "Remplis tous les champs");
-      return;
+  useEffect(() => {
+    async function loadUser() {
+      if (!auth.currentUser) return;
+
+      const data = await getUserById(auth.currentUser.uid);
+
+      if (!data) return;
+
+      setFirstname(data.firstname || "");
+      setAge(data.age ? String(data.age) : "");
+      setCity(data.city || "");
+      setBio(data.bio || "");
+      setPhotos(data.photos || []);
     }
 
+    loadUser();
+  }, []);
+
+  function refreshPhotos() {
+    setPhotos(generateRandomPhotos());
+  }
+
+  async function saveProfile() {
     if (!auth.currentUser) {
       Alert.alert("Erreur", "Utilisateur introuvable");
       return;
     }
 
-    await completeUserProfile(
+    if (!firstname || !age || !city || photos.length === 0) {
+      Alert.alert("Erreur", "Remplis les champs obligatoires");
+      return;
+    }
+
+    await updateUserProfile(
       auth.currentUser.uid,
       firstname,
       Number(age),
       city,
+      bio,
       photos
     );
 
-    router.replace("/(app)/home");
+    Alert.alert("Succès", "Profil mis à jour");
   }
 
   return (
     <View>
-      <Text>Compléter mon profil</Text>
+      <Text>Mon profil</Text>
 
       <TextInput
         placeholder="Prénom"
@@ -81,7 +104,13 @@ export default function CompleteProfile() {
         onChangeText={setCity}
       />
 
-      <Text style={{ marginTop: 20 }}>Photos attribuées automatiquement :</Text>
+      <TextInput
+        placeholder="Bio"
+        value={bio}
+        onChangeText={setBio}
+      />
+
+      <Text style={{ marginTop: 20 }}>Mes photos</Text>
 
       <View style={{ flexDirection: "row", gap: 10, marginTop: 10 }}>
         {photos.map((photo, index) => (
@@ -93,8 +122,12 @@ export default function CompleteProfile() {
         ))}
       </View>
 
+      <TouchableOpacity onPress={refreshPhotos} style={{ marginTop: 20 }}>
+        <Text>Changer mes photos</Text>
+      </TouchableOpacity>
+
       <TouchableOpacity onPress={saveProfile} style={{ marginTop: 20 }}>
-        <Text>Valider</Text>
+        <Text>Enregistrer</Text>
       </TouchableOpacity>
     </View>
   );

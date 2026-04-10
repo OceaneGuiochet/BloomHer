@@ -1,4 +1,11 @@
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+  updateDoc,
+} from "firebase/firestore";
 import { db } from "../config/firebase";
 
 export async function createUser(user: any) {
@@ -8,8 +15,8 @@ export async function createUser(user: any) {
     firstname: "",
     age: null,
     city: "",
-    bio:"",
-    photo: "",
+    bio: "",
+    photos: [],
     isProfileComplete: false,
     createdAt: new Date(),
   });
@@ -25,18 +32,49 @@ export async function getUserById(uid: string) {
   return snapshot.data();
 }
 
+export async function getOtherUsers(currentUserId: string) {
+  const snapshot = await getDocs(collection(db, "users"));
+
+  return snapshot.docs
+    .map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }))
+    .filter(
+      (user: any) =>
+        user.id !== currentUserId && user.isProfileComplete === true
+    );
+}
+
 export async function completeUserProfile(
   uid: string,
   firstname: string,
   age: number,
   city: string,
-  photo: string
+  photos: string[]
 ) {
   await updateDoc(doc(db, "users", uid), {
     firstname,
     age,
     city,
-    photo,
+    photos,
     isProfileComplete: true,
+  });
+}
+
+export async function updateUserProfile(
+  uid: string,
+  firstname: string,
+  age: number,
+  city: string,
+  bio: string,
+  photos: string[]
+) {
+  await updateDoc(doc(db, "users", uid), {
+    firstname,
+    age,
+    city,
+    bio,
+    photos,
   });
 }
