@@ -89,7 +89,7 @@ export default function CompleteProfile() {
       location.longitude,
     );
 
-    router.replace("/(app)/home");
+    router.replace("/home");
   }
 
   return (
