@@ -6,5 +6,7 @@ declare const process: {
     EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET: string;
     EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: string;
     EXPO_PUBLIC_FIREBASE_APP_ID: string;
+
+    EXPO_PUBLIC_LOCATIONIQ_API_KEY: string;
   };
 };

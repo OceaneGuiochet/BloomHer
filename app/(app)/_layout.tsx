@@ -80,6 +80,13 @@ export default function AppLayout() {
       />
 
       <Drawer.Screen
+        name="activities"
+        options={{
+          title: "Activités",
+        }}
+      />
+
+      <Drawer.Screen
         name="settings"
         options={{
           title: "Paramètres",

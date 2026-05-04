@@ -240,9 +240,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "900",
     color: "#16245c",
-    marginBottom: 18,
-    position: "absolute",
-    top: "1.5%",
+    top: "-4%",
   },
   loadingText: {
     fontSize: 16,
